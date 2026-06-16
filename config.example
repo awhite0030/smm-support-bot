@@ -1,0 +1,25 @@
+# Configuration values that can be moved to .env
+
+# Rate limiting
+RATE_LIMIT_MESSAGES_PER_MINUTE = 10
+RATE_LIMIT_WINDOW_SECONDS = 60
+
+# Ticket limits
+MAX_OPEN_TICKETS_PER_USER = 3
+AUTO_CLOSE_HOURS = 24
+SLA_WARNING_HOURS = 1
+
+# Anti-spam
+DUPLICATE_MESSAGE_WINDOW = 3
+SPAM_STRIKE_THRESHOLD = 3
+
+# Logging
+LOG_LEVEL = INFO
+LOG_FORMAT = json  # or 'text'
+
+# Health check
+HEALTH_CHECK_INTERVAL_SECONDS = 60
+
+# Backup
+BACKUP_RETENTION_DAYS = 7
+BACKUP_DIR = /backup
