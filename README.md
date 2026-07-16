@@ -1,273 +1,207 @@
-# SMM Support Bot
+<div align="center">
 
-Telegram-бот для поддержки пользователей: обращения из личных сообщений превращаются в управляемые топики в Telegram-группе, проходят антиспам, SLA-контроль, маршрутизацию и интеграцию с административным API магазина.
+<pre>
+  ____  __  __ __  __   ____                              _
+ / ___||  \/  |  \/  | / ___| _   _ _ __  _ __   ___  _ __| |_
+ \___ \| |\/| | |\/| | \___ \| | | | '_ \| '_ \ / _ \| '__| __|
+  ___) | |  | | |  | |  ___) | |_| | |_) | |_) | (_) | |  | |_
+ |____/|_|  |_|_|  |_| |____/ \__,_| .__/| .__/ \___/|_|   \__|
+                                   |_|   |_|
+   Support Bot  ·  topics  ·  anti-spam  ·  SLA
+</pre>
 
-## Русская версия
+<br/>
 
-### Назначение
+<p>
+  <strong>SMM Support Bot</strong> turns private Telegram messages into managed
+  support topics — with anti-spam, Redis state, SLA jobs, and shop admin API hooks.
+</p>
 
-`SMM Support Bot` закрывает типовой процесс поддержки для Telegram commerce-проектов: пользователь пишет боту, бот создает или находит связанный support-topic, пересылает сообщения оператору, сохраняет состояние в Redis, применяет rate limit и помогает команде не терять обращения.
+<p>
+  <a href="#-why-smm-support-bot">Why</a> ·&nbsp;
+  <a href="#-features">Features</a> ·&nbsp;
+  <a href="#-architecture">Architecture</a> ·&nbsp;
+  <a href="#-quick-start">Quick start</a> ·&nbsp;
+  <a href="#-configuration">Config</a>
+</p>
 
-Проект подходит как основа для:
+<p>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/awhite0030/smm-support-bot?style=for-the-badge&color=blue" alt="License"/></a>
+  &nbsp;<img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"/>
+  &nbsp;<img src="https://img.shields.io/badge/aiogram-3-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white" alt="aiogram"/>
+  &nbsp;<img src="https://img.shields.io/badge/Redis-state-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis"/>
+  &nbsp;<img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker"/>
+  &nbsp;<img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge" alt="PRs welcome"/>
+</p>
 
-- клиентской поддержки Telegram-магазина;
-- внутреннего helpdesk-бота;
-- связки "бот магазина + отдельный бот поддержки";
-- модерации входящих обращений с антиспамом и SLA.
+<p>
+  <img src="https://img.shields.io/github/stars/awhite0030/smm-support-bot?style=social" alt="Stars"/>
+  &nbsp;<img src="https://img.shields.io/github/forks/awhite0030/smm-support-bot?style=social" alt="Forks"/>
+  &nbsp;<img src="https://img.shields.io/github/last-commit/awhite0030/smm-support-bot?style=social" alt="Last commit"/>
+</p>
 
-### Основные возможности
+</div>
 
-- Создание отдельных Telegram topics под обращения пользователей.
-- Двусторонняя пересылка сообщений между пользователем и операторским топиком.
-- Антиспам и throttling для защиты от повторяющихся сообщений.
-- Redis-backed состояние обращений, топиков и rate limits.
-- SLA job для контроля обращений и автоматизации регламентных действий.
-- Поддержка альбомов и вложений через middleware.
-- Healthcheck endpoint и отдельные healthcheck scripts.
-- Интеграция с внешним admin API магазина через `SHOP_ADMIN_KEY` / `ADMIN_API_KEY`.
-- Structured logging для продакшен-диагностики.
-- Docker Compose конфигурация для бота и Redis.
+---
 
-### Архитектура
+## ✨ Why SMM Support Bot?
+
+> *Commerce bots sell. Support bots keep the customers. This one bridges both.*
+
+| Pain | What the bot does |
+| --- | --- |
+| Support buried in DMs | Creates / reuses a **topic per user** in a group |
+| Spam floods operators | Anti-spam + throttling middleware |
+| Lost conversation state | Redis-backed tickets, topics, rate limits |
+| Missed SLAs | Background SLA job for stale tickets |
+| Detached from shop | Optional admin API integration (`SHOP_ADMIN_KEY`) |
+
+Fits Telegram shops, internal helpdesks, and “store bot + support bot” pairs.
+
+---
+
+## 🧩 Features
+
+<table>
+  <thead>
+    <tr>
+      <th align="left">Area</th>
+      <th align="left">What you get</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Topics</strong></td>
+      <td>Dedicated Telegram forum topics per user conversation</td>
+    </tr>
+    <tr>
+      <td><strong>Bridge</strong></td>
+      <td>Two-way relay between user DM and operator topic</td>
+    </tr>
+    <tr>
+      <td><strong>Anti-spam</strong></td>
+      <td>Throttling / rate limits to protect the support group</td>
+    </tr>
+    <tr>
+      <td><strong>Redis state</strong></td>
+      <td>Tickets, topic maps, and runtime limits in Redis</td>
+    </tr>
+    <tr>
+      <td><strong>SLA jobs</strong></td>
+      <td>Background control of open tickets and escalations</td>
+    </tr>
+    <tr>
+      <td><strong>Media</strong></td>
+      <td>Albums and attachments via middleware</td>
+    </tr>
+    <tr>
+      <td><strong>Health</strong></td>
+      <td>Healthcheck endpoint and scripts for uptime probes</td>
+    </tr>
+    <tr>
+      <td><strong>Shop API</strong></td>
+      <td>Hooks to external admin API of the commerce bot</td>
+    </tr>
+    <tr>
+      <td><strong>Observability</strong></td>
+      <td>Structured logging for production diagnostics</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## 🏗 Architecture
 
 ```text
-Telegram user
-    |
-    v
-Support bot
-    |
-    +-- anti-spam / throttling
-    +-- private handlers
-    +-- group topic handlers
-    +-- Redis state
-    +-- SLA background job
-    +-- shop admin API integration
-    |
-    v
-Telegram support group topics
+Telegram user (DM)
+        │
+        ▼
+  Support bot
+   ├─ anti-spam / throttling
+   ├─ private handlers
+   ├─ group topic handlers
+   ├─ Redis state
+   ├─ SLA background job
+   └─ shop admin API
+        │
+        ▼
+Telegram support group (topics)
 ```
 
-Ключевые директории:
+### Layout
 
-- `app/__main__.py` - точка запуска приложения.
-- `app/config.py` - загрузка конфигурации из переменных окружения.
-- `app/bot/handlers/private` - обработчики личных сообщений пользователей.
-- `app/bot/handlers/group` - обработчики сообщений операторов в топиках.
-- `app/bot/middlewares` - Redis, throttling, albums и служебные middleware.
-- `app/bot/utils` - создание топиков, тексты, rate limits, интеграция с магазином.
-- `app/jobs/sla.py` - фоновые SLA-задачи.
-- `app/health.py` - healthcheck.
-- `tests` - базовые и интеграционные проверки.
+```text
+app/
+  __main__.py              # entrypoint
+  config.py                # env config
+  bot/handlers/private     # user DMs
+  bot/handlers/group       # operator topics
+  bot/middlewares          # Redis, throttle, albums
+  bot/utils                # topics, texts, rate limits
+  jobs/sla.py              # SLA background work
+  health.py                # healthcheck
+tests/
+```
 
-### Технологии
+---
 
-- Python 3.10+
-- aiogram 3
-- Redis
-- Docker / Docker Compose
-- pytest
-- structured logging
-
-### Быстрый старт
+## ⚡ Quick start
 
 ```bash
+git clone https://github.com/awhite0030/smm-support-bot.git
+cd smm-support-bot
+
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-cp .env.example .env
+cp .env.example .env        # fill BOT_TOKEN, group id, Redis
 python -m app
 ```
 
-Для Docker:
+### Docker
 
 ```bash
 cp .env.example .env
 docker compose up --build
 ```
 
-### Переменные окружения
+---
 
-Создайте `.env` на основе `.env.example`.
+## ⚙ Configuration
 
-| Переменная | Назначение |
+Create `.env` from `.env.example`. Core variables:
+
+| Variable | Purpose |
 | --- | --- |
-| `BOT_TOKEN` | Токен Telegram-бота из BotFather. |
-| `BOT_DEV_ID` | Telegram ID администратора или разработчика. |
-| `BOT_GROUP_ID` | ID support-группы с включенными topics. |
-| `BOT_EMOJI_ID` | Emoji ID для создаваемых топиков. |
-| `REDIS_HOST` | Хост Redis. |
-| `REDIS_PORT` | Порт Redis. |
-| `REDIS_DB` | Номер Redis DB. |
-| `REDIS_PASSWORD` | Пароль Redis, если используется. |
-| `SHOP_ADMIN_KEY` | Ключ доступа к admin API магазина. |
-| `ADMIN_API_KEY` | Альтернативное имя ключа admin API. |
-| `SHOP_API_BASE_URL` | Базовый URL API магазина. |
-| `LOG_LEVEL` | Уровень логирования. |
+| `BOT_TOKEN` | Telegram bot token from BotFather |
+| `BOT_DEV_ID` | Admin / developer Telegram ID |
+| `BOT_GROUP_ID` | Support group ID with topics enabled |
+| `BOT_EMOJI_ID` | Emoji ID for created topics |
+| `REDIS_HOST` / `REDIS_PORT` / `REDIS_DB` | Redis connection |
+| `SHOP_ADMIN_KEY` / `ADMIN_API_KEY` | Optional shop admin API auth |
 
-### Безопасность
+---
 
-- Реальные `.env`, токены, ключи, логи, базы, дампы и backup-файлы не должны попадать в Git.
-- Все секреты передаются только через переменные окружения.
-- `SHOP_ADMIN_KEY` / `ADMIN_API_KEY` должен быть отдельным сервисным ключом с минимально нужными правами.
-- Support-группа должна быть закрытой, а бот должен иметь только необходимые Telegram-права.
-- Redis рекомендуется закрывать сетевыми правилами и паролем, если он доступен вне localhost/Docker network.
+## 🧪 Stack
 
-### Тестирование
+`Python 3.10+` · `aiogram 3` · `Redis` · `Docker Compose` · `pytest` · structured logging
 
-```bash
-pip install -r requirements-dev.txt
-pytest
-```
+---
 
-Для smoke-проверки:
+## 📊 Stats
 
-```bash
-python healthcheck.py
-./healthcheck.sh
-```
+<p>
+  <img src="https://img.shields.io/github/languages/top/awhite0030/smm-support-bot?style=flat-square" alt="Top language"/>
+  &nbsp;<img src="https://img.shields.io/github/repo-size/awhite0030/smm-support-bot?style=flat-square" alt="Repo size"/>
+  &nbsp;<img src="https://img.shields.io/github/last-commit/awhite0030/smm-support-bot?style=flat-square" alt="Last commit"/>
+  &nbsp;<img src="https://img.shields.io/github/issues/awhite0030/smm-support-bot?style=flat-square" alt="Issues"/>
+</p>
 
-### Production checklist
+---
 
-- Создать отдельного Telegram-бота для поддержки.
-- Включить topics в support-группе.
-- Выдать боту права на управление topics.
-- Заполнить `.env` реальными значениями на сервере.
-- Проверить Redis connectivity.
-- Проверить healthcheck.
-- Настроить логирование и ротацию логов на уровне инфраструктуры.
-- Не публиковать `.env`, production logs, Redis dumps и клиентские выгрузки.
+## 📄 License
 
-## English version
+[MIT](LICENSE) © 2026 A. White.
 
-### Purpose
-
-`SMM Support Bot` is a Telegram support workflow for commerce and SMM automation projects. A user writes to the bot, the bot creates or reuses a Telegram support topic, routes messages to operators, keeps state in Redis, applies anti-spam rules, and supports SLA automation.
-
-It can be used as:
-
-- a customer support bot for a Telegram shop;
-- an internal helpdesk bot;
-- a bridge between a shop bot and a support team;
-- an anti-spam and SLA-aware intake layer for user requests.
-
-### Features
-
-- Dedicated Telegram topics for user requests.
-- Two-way forwarding between private user chats and operator topics.
-- Anti-spam and throttling middleware.
-- Redis-backed request, topic, and rate-limit state.
-- SLA background job for operational control.
-- Album and attachment handling.
-- Healthcheck endpoint and scripts.
-- Integration with an external shop admin API through `SHOP_ADMIN_KEY` / `ADMIN_API_KEY`.
-- Structured logging for production diagnostics.
-- Docker Compose setup for the bot and Redis.
-
-### Architecture
-
-```text
-Telegram user
-    |
-    v
-Support bot
-    |
-    +-- anti-spam / throttling
-    +-- private handlers
-    +-- group topic handlers
-    +-- Redis state
-    +-- SLA background job
-    +-- shop admin API integration
-    |
-    v
-Telegram support group topics
-```
-
-Important directories:
-
-- `app/__main__.py` - application entry point.
-- `app/config.py` - environment configuration.
-- `app/bot/handlers/private` - private chat handlers.
-- `app/bot/handlers/group` - operator topic handlers.
-- `app/bot/middlewares` - Redis, throttling, album, and service middleware.
-- `app/bot/utils` - topic creation, texts, rate limits, and shop integration.
-- `app/jobs/sla.py` - SLA background jobs.
-- `app/health.py` - healthcheck logic.
-- `tests` - basic and integration tests.
-
-### Stack
-
-- Python 3.10+
-- aiogram 3
-- Redis
-- Docker / Docker Compose
-- pytest
-- structured logging
-
-### Quick start
-
-```bash
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-python -m app
-```
-
-Docker:
-
-```bash
-cp .env.example .env
-docker compose up --build
-```
-
-### Environment
-
-Create `.env` from `.env.example`.
-
-| Variable | Description |
-| --- | --- |
-| `BOT_TOKEN` | Telegram bot token from BotFather. |
-| `BOT_DEV_ID` | Telegram admin/developer ID. |
-| `BOT_GROUP_ID` | Support group ID with topics enabled. |
-| `BOT_EMOJI_ID` | Emoji ID used for created topics. |
-| `REDIS_HOST` | Redis host. |
-| `REDIS_PORT` | Redis port. |
-| `REDIS_DB` | Redis DB number. |
-| `REDIS_PASSWORD` | Redis password, if enabled. |
-| `SHOP_ADMIN_KEY` | Service key for shop admin API access. |
-| `ADMIN_API_KEY` | Alternative admin API key variable. |
-| `SHOP_API_BASE_URL` | Shop API base URL. |
-| `LOG_LEVEL` | Logging level. |
-
-### Security
-
-- Never commit real `.env` files, tokens, keys, logs, databases, dumps, backups, or customer exports.
-- Runtime secrets must be passed through environment variables only.
-- Use a separate service key with minimal permissions for shop admin API calls.
-- Keep the support group private and give the bot only the required Telegram permissions.
-- Protect Redis with network rules and a password when it is reachable outside localhost or a private Docker network.
-
-### Testing
-
-```bash
-pip install -r requirements-dev.txt
-pytest
-```
-
-Smoke checks:
-
-```bash
-python healthcheck.py
-./healthcheck.sh
-```
-
-### Production checklist
-
-- Create a dedicated Telegram support bot.
-- Enable topics in the support group.
-- Grant the bot topic management permissions.
-- Fill `.env` on the server with real values.
-- Verify Redis connectivity.
-- Verify healthchecks.
-- Configure log rotation at the infrastructure level.
-- Keep `.env`, production logs, Redis dumps, and customer exports out of Git.
+<sub>Every DM deserves a topic. Every ticket deserves an SLA.</sub>
